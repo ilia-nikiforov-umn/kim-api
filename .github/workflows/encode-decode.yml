@@ -17,6 +17,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
+    - name: Install gfortran
+      if: runner.os == 'macOS'
+      run: |
+       brew install gfortran
+
     - name: Build KIM API and run encoder-decoder
       shell: bash
       run: |

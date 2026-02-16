@@ -9,7 +9,8 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-15]
+      fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
@@ -17,9 +18,34 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
+    - name: Setup Homebrew
+      if: runner.os == 'macOS'
+      run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install gcc
+
+    - name: Check compiler installation
+      if: runner.os == 'macOS'
+      run: |      
+        echo "Checking Clang and GCC..."
+        which clang++ || echo "Clang++ not found"
+        which g++ || echo "G++ not found"
+        which gcc || echo "gcc not found"
+        which gfortran-14 || echo "gfortran-14 not found"
+        clang++ --version || echo "Clang++ version check failed"
+        g++ --version || echo "G++ version check failed"
+        gfortran-14 --version || echo "gfortran-14 version check failed"
+
     - name: Build KIM API and run encoder-decoder
       shell: bash
       run: |
+       export CXX17=true
+       export CXX=clang++
+       export CC=clang
+       export FC=gfortran-14
        mkdir build && cd build
        cmake .. -DCMAKE_BUILD_TYPE=Release -DKIM_API_BUILD_EXAMPLES=off
        make -j3

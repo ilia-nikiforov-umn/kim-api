@@ -17,10 +17,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
+    - name: Install gfortran
+      if: runner.os == 'macOS'
+      run: |
+       export FC=gfortran-14
+
     - name: Build KIM API and run encoder-decoder
       shell: bash
       run: |
-       export FC=gfortran-14
        mkdir build && cd build
        cmake .. -DCMAKE_BUILD_TYPE=Release -DKIM_API_BUILD_EXAMPLES=off
        make -j3

@@ -8,8 +8,9 @@ on:
 jobs:
   build-and-test:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-14, macos-15]
 
     runs-on: ${{ matrix.os }}
 
@@ -17,11 +18,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
+    - name: Install gfortran on macOS
+      if: runner.os == 'macOS'
+      run: brew install gfortran
+
     - name: Build KIM API and run encoder-decoder
       shell: bash
       run: |
-       mkdir build && cd build
-       cmake .. -DCMAKE_BUILD_TYPE=Release -DKIM_API_BUILD_EXAMPLES=off
-       make -j3
-       cp ../examples/simulator-models/Sim_LAMMPS_LJcut_AkersonElliott_Alchemy_PbAu/Alchemy_PbAu.in input.txt
-       utils/kim-api-base64-encode -i input.txt output.txt
+        if [[ "${{ runner.os }}" == "macOS" ]]; then
+          if [[ -f /opt/homebrew/bin/gfortran ]]; then
+            export FC=/opt/homebrew/bin/gfortran
+          elif [[ -f /usr/local/bin/gfortran ]]; then
+            export FC=/usr/local/bin/gfortran
+          fi
+        fi
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DKIM_API_BUILD_EXAMPLES=off -DCMAKE_Fortran_COMPILER="$FC"
+        make -j3
+        cp ../examples/simulator-models/Sim_LAMMPS_LJcut_AkersonElliott_Alchemy_PbAu/Alchemy_PbAu.in input.txt
+        utils/kim-api-base64-encode -i input.txt output.txt

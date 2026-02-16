@@ -20,7 +20,7 @@ jobs:
     - name: Install gfortran
       if: runner.os == 'macOS'
       run: |
-       export FC=gfortran-14
+       brew install gfortran
 
     - name: Build KIM API and run encoder-decoder
       shell: bash
